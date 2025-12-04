@@ -7,7 +7,7 @@ import jakarta.persistence.Id;
 import labrini.ouiam.eventsourcing_cqrs_spring_axon.enums.AccountStatus;
 import lombok.*;
 
-import java.util.Date;
+import java.time.Instant;
 
 @Entity @AllArgsConstructor @NoArgsConstructor @Getter @Setter @Builder
 public class Account {
@@ -15,7 +15,7 @@ public class Account {
     private String id;
     private double balance;
     private String currency;
-    private Date createdAt;
+    private Instant createdAt;
     @Enumerated(EnumType.STRING)
     private AccountStatus status;
 }

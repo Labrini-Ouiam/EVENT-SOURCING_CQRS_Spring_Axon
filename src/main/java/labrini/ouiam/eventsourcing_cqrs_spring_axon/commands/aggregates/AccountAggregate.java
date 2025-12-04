@@ -2,10 +2,10 @@ package labrini.ouiam.eventsourcing_cqrs_spring_axon.commands.aggregates;
 
 import labrini.ouiam.eventsourcing_cqrs_spring_axon.commands.commands.AddAccountCommand;
 import labrini.ouiam.eventsourcing_cqrs_spring_axon.commands.commands.CreditAccountCommand;
+import labrini.ouiam.eventsourcing_cqrs_spring_axon.commands.commands.DebitAccountCommand;
+import labrini.ouiam.eventsourcing_cqrs_spring_axon.commands.commands.UpdateAccountStatusCommand;
 import labrini.ouiam.eventsourcing_cqrs_spring_axon.enums.AccountStatus;
-import labrini.ouiam.eventsourcing_cqrs_spring_axon.events.AccountActivatedEvent;
-import labrini.ouiam.eventsourcing_cqrs_spring_axon.events.AccountCreatedEvent;
-import labrini.ouiam.eventsourcing_cqrs_spring_axon.events.AccountCreditedEvent;
+import labrini.ouiam.eventsourcing_cqrs_spring_axon.events.*;
 import lombok.extern.slf4j.Slf4j;
 import org.axonframework.commandhandling.CommandHandler;
 import org.axonframework.eventsourcing.EventSourcingHandler;
@@ -87,6 +87,55 @@ public class AccountAggregate {
     // fonction d'evolution
     public void on(AccountActivatedEvent event) {
         log.info("Applying AccountActivatedEvent for account ID: {}", event.getAccountId());
+        this.accountId = event.getAccountId();
+        this.status = event.getStatus();
+    }
+
+    @CommandHandler
+    //fonction de decision
+    public void handle(DebitAccountCommand command) {
+        log.info("Handling DebitAccountCommand for account ID: {}", command.getId());
+        if(!status.equals(AccountStatus.ACTIVATED))
+            throw new RuntimeException("Account : "+command.getId()+" not activated");
+        if(command.getAmount() > this.balance) {
+            throw new RuntimeException("Insufficient balance");
+        }
+        if(command.getAmount() < 0) {
+            throw new IllegalArgumentException("Credit amount cannot be negative");
+        }
+        AggregateLifecycle.apply(new AccountDebitedEvent(
+                command.getId(),
+                command.getAmount(),
+                command.getCurrency()
+        ));
+
+    }
+
+    @EventSourcingHandler
+    // fonction d'evolution
+    public void on(AccountDebitedEvent event) {
+        log.info("Applying AccountDebitedEvent for account ID: {}", event.getAccountId());
+        this.accountId = event.getAccountId();
+        this.balance -= event.getAmount();
+    }
+
+    @CommandHandler
+    //fonction de decision
+    public void handle(UpdateAccountStatusCommand command) {
+        log.info("Handling DebitAccountCommand for account ID: {}", command.getId());
+        if(command.getStatus()==status)
+            throw new RuntimeException("Account : "+command.getId()+" already in status "+command.getStatus());
+        AggregateLifecycle.apply(new AccountStatusUpdatedEvent(
+                command.getId(),
+                command.getStatus()
+        ));
+
+    }
+
+    @EventSourcingHandler
+    // fonction d'evolution
+    public void on(AccountStatusUpdatedEvent event) {
+        log.info("Applying AccountStatusUpdatedEvent for account ID: {}", event.getAccountId());
         this.accountId = event.getAccountId();
         this.status = event.getStatus();
     }

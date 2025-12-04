@@ -2,8 +2,12 @@ package labrini.ouiam.eventsourcing_cqrs_spring_axon.commands.controllers;
 
 import labrini.ouiam.eventsourcing_cqrs_spring_axon.commands.commands.AddAccountCommand;
 import labrini.ouiam.eventsourcing_cqrs_spring_axon.commands.commands.CreditAccountCommand;
+import labrini.ouiam.eventsourcing_cqrs_spring_axon.commands.commands.DebitAccountCommand;
+import labrini.ouiam.eventsourcing_cqrs_spring_axon.commands.commands.UpdateAccountStatusCommand;
 import labrini.ouiam.eventsourcing_cqrs_spring_axon.commands.dtos.AddNewAccountRequestDTO;
 import labrini.ouiam.eventsourcing_cqrs_spring_axon.commands.dtos.CreditAccountRequestDTO;
+import labrini.ouiam.eventsourcing_cqrs_spring_axon.commands.dtos.DebitAccountRequestDTO;
+import labrini.ouiam.eventsourcing_cqrs_spring_axon.commands.dtos.UpdateAccountStatusRequestDTO;
 import org.axonframework.commandhandling.gateway.CommandGateway;
 import org.axonframework.eventsourcing.eventstore.EventStore;
 import org.springframework.web.bind.annotation.*;
@@ -42,6 +46,29 @@ public class AccountCommandController {
                 request.accountId(),
                 request.amount(),
                 request.currency()
+        ));
+        return response;
+    }
+
+    // Endpoint to debit an existing account
+    @PostMapping("/debit")
+    public CompletableFuture<String> debitAccount(@RequestBody DebitAccountRequestDTO request) {
+        // Create and send the DebitAccountCommand
+        CompletableFuture<String> response= commandGateway.send(new DebitAccountCommand(
+                request.accountId(),
+                request.amount(),
+                request.currency()
+        ));
+        return response;
+    }
+
+    // Endpoint to update account status
+    @PutMapping("/updateStatus")
+    public CompletableFuture<String> debitAccount(@RequestBody UpdateAccountStatusRequestDTO request) {
+        // Create and send the DebitAccountCommand
+        CompletableFuture<String> response= commandGateway.send(new UpdateAccountStatusCommand(
+                request.accountId(),
+                request.status()
         ));
         return response;
     }

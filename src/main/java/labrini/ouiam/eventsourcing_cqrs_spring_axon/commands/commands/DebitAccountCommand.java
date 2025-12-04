@@ -5,7 +5,7 @@ import lombok.Getter;
 import org.axonframework.modelling.command.TargetAggregateIdentifier;
 
 @Getter @AllArgsConstructor
-public class CreditAccountCommand {
+public class DebitAccountCommand {
     @TargetAggregateIdentifier
     private String id;
     private double amount;

@@ -1,12 +1,12 @@
 package labrini.ouiam.eventsourcing_cqrs_spring_axon.events;
 
+import labrini.ouiam.eventsourcing_cqrs_spring_axon.enums.AccountStatus;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
 @Getter @AllArgsConstructor
-public class AccountDebitedEvent {
+public class AccountStatusUpdatedEvent {
     private String accountId;
-    private double amount;
-    private String currency;
+    private AccountStatus status;
 
 }
