@@ -1,8 +1,11 @@
 package labrini.ouiam.eventsourcing_cqrs_spring_axon.commands.aggregates;
 
 import labrini.ouiam.eventsourcing_cqrs_spring_axon.commands.commands.AddAccountCommand;
+import labrini.ouiam.eventsourcing_cqrs_spring_axon.commands.commands.CreditAccountCommand;
 import labrini.ouiam.eventsourcing_cqrs_spring_axon.enums.AccountStatus;
+import labrini.ouiam.eventsourcing_cqrs_spring_axon.events.AccountActivatedEvent;
 import labrini.ouiam.eventsourcing_cqrs_spring_axon.events.AccountCreatedEvent;
+import labrini.ouiam.eventsourcing_cqrs_spring_axon.events.AccountCreditedEvent;
 import lombok.extern.slf4j.Slf4j;
 import org.axonframework.commandhandling.CommandHandler;
 import org.axonframework.eventsourcing.EventSourcingHandler;
@@ -31,11 +34,17 @@ public class AccountAggregate {
         if(command.getInitialBalance() < 0) {
             throw new IllegalArgumentException("Initial balance cannot be negative");
         }
+
         AggregateLifecycle.apply(new AccountCreatedEvent(
                 command.getId(),
                 command.getInitialBalance(),
                 command.getCurrency(),
                 AccountStatus.CREATED
+        ));
+
+        AggregateLifecycle.apply(new AccountActivatedEvent(
+                command.getId(),
+                AccountStatus.ACTIVATED
         ));
 
     }
@@ -46,6 +55,39 @@ public class AccountAggregate {
         log.info("Applying AccountCreatedEvent for account ID: {}", event.getAccountId());
         this.accountId = event.getAccountId();
         this.balance = event.getInitialBalance();
+        this.status = event.getStatus();
+    }
+
+    @CommandHandler
+    //fonction de decision
+    public void handle(CreditAccountCommand command) {
+        log.info("Handling CreditAccountCommand for account ID: {}", command.getId());
+        if(!status.equals(AccountStatus.ACTIVATED))
+            throw new RuntimeException("Account : "+command.getId()+" not activated");
+        if(command.getAmount() < 0) {
+            throw new IllegalArgumentException("Credit amount cannot be negative");
+        }
+        AggregateLifecycle.apply(new AccountCreditedEvent(
+                command.getId(),
+                command.getAmount(),
+                command.getCurrency()
+        ));
+
+    }
+
+    @EventSourcingHandler
+    // fonction d'evolution
+    public void on(AccountCreditedEvent event) {
+        log.info("Applying AccountCreditedEvent for account ID: {}", event.getAccountId());
+        this.accountId = event.getAccountId();
+        this.balance += event.getAmount();
+    }
+
+    @EventSourcingHandler
+    // fonction d'evolution
+    public void on(AccountActivatedEvent event) {
+        log.info("Applying AccountActivatedEvent for account ID: {}", event.getAccountId());
+        this.accountId = event.getAccountId();
         this.status = event.getStatus();
     }
 
