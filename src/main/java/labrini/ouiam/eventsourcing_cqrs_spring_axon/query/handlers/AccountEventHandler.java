@@ -9,18 +9,21 @@ import labrini.ouiam.eventsourcing_cqrs_spring_axon.query.repository.AccountRepo
 import lombok.extern.slf4j.Slf4j;
 import org.axonframework.eventhandling.EventHandler;
 import org.axonframework.eventhandling.EventMessage;
+import org.axonframework.queryhandling.QueryUpdateEmitter;
 import org.springframework.stereotype.Component;
 
 @Component
 @Slf4j
 public class AccountEventHandler {
+    private final QueryUpdateEmitter queryUpdateEmitter;
     private AccountRepository accountRepository;
     private AccountOperationRepository accountOperationRepository;
 
 
-    public AccountEventHandler(AccountRepository accountRepository, AccountOperationRepository accountOperationRepository) {
+    public AccountEventHandler(AccountRepository accountRepository, AccountOperationRepository accountOperationRepository, QueryUpdateEmitter queryUpdateEmitter) {
         this.accountRepository = accountRepository;
         this.accountOperationRepository = accountOperationRepository;
+        this.queryUpdateEmitter = queryUpdateEmitter;
     }
 
     @EventHandler
@@ -66,6 +69,7 @@ public class AccountEventHandler {
         accountOperationRepository.save(operation);
         account.setBalance(account.getBalance() - event.getAmount());
         accountRepository.save(account);
+        queryUpdateEmitter.emit(e->true,operation);
     }
 
     @EventHandler
@@ -82,5 +86,6 @@ public class AccountEventHandler {
         accountOperationRepository.save(operation);
         account.setBalance(account.getBalance() + event.getAmount());
         accountRepository.save(account);
+        queryUpdateEmitter.emit(e->true,operation);
     }
 }
